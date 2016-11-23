@@ -186,20 +186,12 @@ class GUI(Frame):
             except queue.Empty:
                 pass
     def pauseEvent(self):
-<<<<<<< HEAD
         self.thread.paused()
-=======
-        #這裡要有暫停執行緒的動作
->>>>>>> origin/master
         self.pause.config(state=DISABLED)
         self.moveon.config(state=ACTIVE)
 
     def resumeEvent(self):
-<<<<<<< HEAD
         self.thread.resumed()
-=======
-        #這裡要有恢復執行緒的動作
->>>>>>> origin/master
         self.pause.config(state=ACTIVE)
         self.moveon.config(state=DISABLED)
 
