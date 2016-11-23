@@ -21,6 +21,7 @@ class GUI(Frame):
         self.queue = queue.Queue()
         self.step = serial.Serial()
         self.serv = serial.Serial()
+        self.is_pause = False
         window= Frame(self.master)
         window.pack()
         window.configure(background='#344253')
@@ -147,7 +148,7 @@ class GUI(Frame):
         self.t.config(state=DISABLED)
         #建立子執行緒執行繪圖
         
-        self.thread = ThreadedClient(self.queue,self.step,self.serv)
+        self.thread = ThreadedClient(self.queue,self.step,self.serv,self.is_pause)
         self.thread.start()
         self.periodiccall()
 
@@ -185,51 +186,54 @@ class GUI(Frame):
             except queue.Empty:
                 pass
     def pauseEvent(self):
+<<<<<<< HEAD
+        self.thread.paused()
+=======
         #這裡要有暫停執行緒的動作
+>>>>>>> origin/master
         self.pause.config(state=DISABLED)
         self.moveon.config(state=ACTIVE)
 
     def resumeEvent(self):
+<<<<<<< HEAD
+        self.thread.resumed()
+=======
         #這裡要有恢復執行緒的動作
+>>>>>>> origin/master
         self.pause.config(state=ACTIVE)
         self.moveon.config(state=DISABLED)
 
 class ThreadedClient(threading.Thread):
 
-    def __init__(self, queue, step, serv):
+    def __init__(self, queue, step, serv, is_pause):
         threading.Thread.__init__(self)
         self.queue = queue
         self.step = step
+        self.is_pause = is_pause
     def run(self):
-        gcode = open('gcode/cathy.gcode','r')
         if self.step.isOpen():
-           
-            for line in gcode:
-                l = line.strip()
-                if l.startswith('Z'):
+            with open('gcode/cathy.gcode', 'r') as f:
+                gcode = (line for line in f.readlines())  # generator.
+            while 1:
+                if self.is_pause:
+                    time.sleep(0.5)
                     continue
-                    # pen = l.split('Z')[1]
-                    # self.step.write('G4 P1\n')
-                    # grbl_out = self.step.readline()
-                    # msg = l + ':' + grbl_out.strip()
-                    # self.queue.put(msg)
-                    # # print l + ':' + grbl_out.strip()
-                            
-                    # self.serv.write(pen+'\n')
-                    # self.step.write('G4 P1\n')
-                    # grbl_out = self.step.readline()
-                    # msg = l + ':' + grbl_out.strip()
-                    # self.queue.put(msg)
-                    # # print l + ':' + grbl_out.strip()
+                try:
+                    l = next(gcode).strip()
+                except StopIteration:  # out of data.
+                    break
                 else:
-                    self.step.write(l+'\n')
-                    grbl_out = self.step.readline()
-                    # print l + ':' + grbl_out.strip()
-                    msg = l + ':' + grbl_out.strip()
-                    self.queue.put(msg)
-            gcode.close()
+                    if not l.startswith('Z'):
+                        self.step.write("%s\n" % l)
+                        grbl_out = self.step.readline()
+                        msg = "%s:%s" % (l, grbl_out.strip())
+                        self.queue.put(msg)
             self.step.close()
-            # self.serv.close()
+    def paused(self):
+        self.is_pause = True
+    def resumed(self):
+        self.is_pause = False
+        
 #==========主畫面==========#
 if __name__ == '__main__':  
     #==========開啟使用者介面==========#
